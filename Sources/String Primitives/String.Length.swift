@@ -15,13 +15,14 @@ extension String {
     /// Computes the length of a null-terminated string, excluding the terminator.
     ///
     /// Implemented without platform-specific `strlen`/`wcslen` dependencies.
+    @unsafe
     @inlinable
     public static func length(of pointer: UnsafePointer<Char>) -> Int {
-        var current = pointer
-        while current.pointee != terminator {
-            current = current.successor()
+        var current = unsafe pointer
+        while unsafe current.pointee != terminator {
+            unsafe (current = current.successor())
         }
-        return current - pointer
+        return unsafe current - pointer
     }
 }
 

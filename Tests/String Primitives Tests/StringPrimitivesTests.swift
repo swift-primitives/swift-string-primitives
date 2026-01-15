@@ -17,8 +17,8 @@ struct StringPrimitivesTests {
     @Test
     func lengthOfEmptyString() {
         let empty: [String_Primitives.String.Char] = [String_Primitives.String.terminator]
-        empty.withUnsafeBufferPointer { buffer in
-            let length = String_Primitives.String.length(of: buffer.baseAddress!)
+        unsafe empty.withUnsafeBufferPointer { buffer in
+            let length = unsafe String_Primitives.String.length(of: buffer.baseAddress!)
             #expect(length == 0)
         }
     }
@@ -27,8 +27,8 @@ struct StringPrimitivesTests {
     func lengthOfNonEmptyString() {
         // "hello" = [104, 101, 108, 108, 111, 0]
         let hello: [String_Primitives.String.Char] = [104, 101, 108, 108, 111, String_Primitives.String.terminator]
-        hello.withUnsafeBufferPointer { buffer in
-            let length = String_Primitives.String.length(of: buffer.baseAddress!)
+        unsafe hello.withUnsafeBufferPointer { buffer in
+            let length = unsafe String_Primitives.String.length(of: buffer.baseAddress!)
             #expect(length == 5)
         }
     }

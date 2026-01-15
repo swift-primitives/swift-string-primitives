@@ -21,6 +21,7 @@ extension String {
     /// the scope where it was created — preventing use-after-free bugs.
     ///
     /// Invariant: Points to a null-terminated sequence.
+    @safe
     public struct View: ~Copyable, ~Escapable {
         /// The underlying pointer to the null-terminated sequence.
         public let pointer: UnsafePointer<Char>
@@ -39,9 +40,9 @@ extension String.View {
     @_lifetime(borrow pointer)
     public init(_ pointer: UnsafePointer<String.Char>) {
         #if DEBUG
-        Self.debugValidateTermination(pointer)
+        unsafe Self.debugValidateTermination(pointer)
         #endif
-        self.pointer = pointer
+        unsafe (self.pointer = pointer)
     }
 }
 
@@ -53,15 +54,16 @@ extension String.View {
     @usableFromInline
     internal static let maxDebugScanLength = 16 * 1024 * 1024 // 16 MiB
 
+    @unsafe
     @usableFromInline
     internal static func debugValidateTermination(_ pointer: UnsafePointer<String.Char>) {
-        var current = pointer
+        var current = unsafe pointer
         var scanned = 0
         while scanned < maxDebugScanLength {
-            if current.pointee == String.terminator {
+            if unsafe current.pointee == String.terminator {
                 return // Valid: found terminator
             }
-            current = current.successor()
+            unsafe (current = current.successor())
             scanned += 1
         }
         assertionFailure("String.View: pointer does not appear to be null-terminated within \(maxDebugScanLength) bytes")
@@ -73,17 +75,18 @@ extension String.View {
 
 extension String.View {
     /// Executes a closure with the underlying pointer.
+    @unsafe
     @inlinable
     public borrowing func withUnsafePointer<R: ~Copyable, E: Error>(
         _ body: (UnsafePointer<String.Char>) throws(E) -> R
     ) throws(E) -> R {
-        try body(pointer)
+        try unsafe body(pointer)
     }
 
     /// The length in code units, excluding the null terminator.
     @inlinable
     public var length: Int {
-        String.length(of: pointer)
+        unsafe String.length(of: pointer)
     }
 
     /// Returns a `Span` view of the string content, excluding the null terminator.

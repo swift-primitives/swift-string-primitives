@@ -25,6 +25,7 @@
 ///
 /// - **POSIX (macOS, Linux)**: UTF-8 (`CChar`)
 /// - **Windows**: UTF-16 (`UInt16`)
+@safe
 public struct String: ~Copyable {
     /// The underlying pointer to the null-terminated sequence.
     @usableFromInline
@@ -35,7 +36,7 @@ public struct String: ~Copyable {
 
     @inlinable
     deinit {
-        pointer.deallocate()
+        unsafe pointer.deallocate()
     }
 }
 
@@ -55,9 +56,9 @@ extension String {
     @inlinable
     public init(adopting pointer: UnsafeMutablePointer<String.Char>, count: Int) {
         #if DEBUG
-        precondition(pointer[count] == String.terminator, "String: adopted buffer must be null-terminated")
+        precondition(unsafe pointer[count] == String.terminator, "String: adopted buffer must be null-terminated")
         #endif
-        self.pointer = pointer
+        unsafe (self.pointer = pointer)
         self.count = count
     }
 
@@ -68,9 +69,9 @@ extension String {
     public init(copying view: borrowing String.View) {
         let length = view.length
         let buffer = UnsafeMutablePointer<String.Char>.allocate(capacity: length + 1)
-        buffer.initialize(from: view.pointer, count: length)
-        buffer[length] = String.terminator
-        self.pointer = buffer
+        unsafe buffer.initialize(from: view.pointer, count: length)
+        (unsafe buffer)[length] = String.terminator
+        unsafe (self.pointer = buffer)
         self.count = length
     }
 }
@@ -79,19 +80,21 @@ extension String {
 
 extension String {
     /// Executes a closure with the underlying pointer.
+    @unsafe
     @inlinable
     public borrowing func withUnsafePointer<R: ~Copyable, E: Error>(
         _ body: (UnsafePointer<String.Char>) throws(E) -> R
     ) throws(E) -> R {
-        try body(pointer)
+        try unsafe body(pointer)
     }
 
     /// Executes a closure with the underlying mutable pointer.
+    @unsafe
     @inlinable
     public mutating func withUnsafeMutablePointer<R: ~Copyable, E: Error>(
         _ body: (UnsafeMutablePointer<String.Char>) throws(E) -> R
     ) throws(E) -> R {
-        try body(pointer)
+        try unsafe body(pointer)
     }
 
     /// Returns a view of this string.
@@ -124,11 +127,12 @@ extension String {
     /// This instance is consumed and will not deallocate the buffer.
     ///
     /// - Returns: A tuple of (pointer, count) where count excludes the null terminator.
+    @unsafe
     @inlinable
     public consuming func take() -> (pointer: UnsafeMutablePointer<String.Char>, count: Int) {
-        let result = (pointer, count)
+        let result = unsafe (pointer, count)
         discard self
-        return result
+        return unsafe result
     }
 }
 
