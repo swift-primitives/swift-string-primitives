@@ -1,0 +1,49 @@
+// swift-tools-version: 6.2
+
+import PackageDescription
+
+let package = Package(
+    name: "swift-string-primitives",
+    platforms: [
+        .macOS(.v26),
+        .iOS(.v26),
+        .tvOS(.v26),
+        .watchOS(.v26),
+        .visionOS(.v26),
+    ],
+    products: [
+        .library(
+            name: "String Primitives",
+            targets: ["String Primitives"]
+        ),
+    ],
+    targets: [
+        .target(
+            name: "String Primitives",
+            dependencies: [],
+            swiftSettings: [
+                .define("STRING_PRIMITIVES_AVAILABLE", .when(platforms: [
+                    .macOS, .iOS, .tvOS, .watchOS, .visionOS,
+                    .linux, .windows, .android, .openbsd,
+                ])),
+            ]
+        ),
+        .testTarget(
+            name: "String Primitives Tests",
+            dependencies: ["String Primitives"],
+            path: "Tests/String Primitives Tests"
+        ),
+    ],
+    swiftLanguageModes: [.v6]
+)
+
+for target in package.targets where ![.system, .binary, .plugin].contains(target.type) {
+    let settings: [SwiftSetting] = [
+        .enableUpcomingFeature("ExistentialAny"),
+        .enableUpcomingFeature("InternalImportsByDefault"),
+        .enableUpcomingFeature("MemberImportVisibility"),
+        .enableExperimentalFeature("Lifetimes"),
+        .enableExperimentalFeature("LifetimeDependence"),
+    ]
+    target.swiftSettings = (target.swiftSettings ?? []) + settings
+}
