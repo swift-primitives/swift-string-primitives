@@ -14,13 +14,21 @@
 extension String {
     /// Platform-native code unit for OS strings.
     ///
-    /// - POSIX (macOS, Linux): `CChar` (UTF-8)
+    /// - POSIX (macOS, Linux): `UInt8` (UTF-8)
     /// - Windows: `UInt16` (UTF-16)
+    ///
+    /// This is a pure Swift type. C interop projections (`CChar`, `WCHAR`)
+    /// belong at syscall boundaries, not in primitives.
     #if os(Windows)
     public typealias Char = UInt16
     #else
-    public typealias Char = CChar
+    public typealias Char = UInt8
     #endif
+
+    /// Semantic alias for `Char`.
+    ///
+    /// Prefer `CodeUnit` in new code for clarity.
+    public typealias CodeUnit = Char
 
     /// The null terminator value.
     @inlinable

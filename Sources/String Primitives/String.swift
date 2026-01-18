@@ -23,20 +23,30 @@
 ///
 /// ## Platform Encoding
 ///
-/// - **POSIX (macOS, Linux)**: UTF-8 (`CChar`)
+/// - **POSIX (macOS, Linux)**: UTF-8 (`UInt8`)
 /// - **Windows**: UTF-16 (`UInt16`)
+///
+/// ## Sendability
+///
+/// This type is `@unchecked Sendable` because:
+/// - The buffer is uniquely owned by this value (`~Copyable` prevents aliasing)
+/// - The buffer is **immutable after initialization** (stored as `UnsafePointer`)
+/// - Sharing across tasks (via `Reference.Box`) is safe: reads-only + lifetime
+///   managed by the owning value or its box
 @safe
-public struct String: ~Copyable {
+public struct String: ~Copyable, @unchecked Sendable {
     /// The underlying pointer to the null-terminated sequence.
+    ///
+    /// Stored as immutable pointer to enforce post-initialization immutability.
     @usableFromInline
-    internal let pointer: UnsafeMutablePointer<Char>
+    internal let pointer: UnsafePointer<Char>
 
     /// The length in code units, excluding the null terminator.
     public let count: Int
 
     @inlinable
     deinit {
-        unsafe pointer.deallocate()
+        unsafe UnsafeMutablePointer(mutating: pointer).deallocate()
     }
 }
 
@@ -58,7 +68,7 @@ extension String {
         #if DEBUG
         precondition(unsafe pointer[count] == String.terminator, "String: adopted buffer must be null-terminated")
         #endif
-        unsafe (self.pointer = pointer)
+        unsafe (self.pointer = UnsafePointer(pointer))
         self.count = count
     }
 
@@ -71,9 +81,10 @@ extension String {
         let buffer = UnsafeMutablePointer<String.Char>.allocate(capacity: length + 1)
         unsafe buffer.initialize(from: view.pointer, count: length)
         (unsafe buffer)[length] = String.terminator
-        unsafe (self.pointer = buffer)
+        unsafe (self.pointer = UnsafePointer(buffer))
         self.count = length
     }
+
 }
 
 // MARK: - Access
@@ -88,22 +99,13 @@ extension String {
         try unsafe body(pointer)
     }
 
-    /// Executes a closure with the underlying mutable pointer.
-    @unsafe
-    @inlinable
-    public mutating func withUnsafeMutablePointer<R: ~Copyable, E: Error>(
-        _ body: (UnsafeMutablePointer<String.Char>) throws(E) -> R
-    ) throws(E) -> R {
-        try unsafe body(pointer)
-    }
-
     /// Returns a view of this string.
     ///
     /// The lifetime of the returned `View` is tied to `self`.
     @inlinable
     public var view: String.View {
         @_lifetime(borrow self) borrowing get {
-            let view = unsafe String.View(UnsafePointer(pointer))
+            let view = unsafe String.View(pointer)
             return unsafe _overrideLifetime(view, borrowing: self)
         }
     }
@@ -112,7 +114,7 @@ extension String {
     @inlinable
     public var span: Span<String.Char> {
         @_lifetime(borrow self) borrowing get {
-            let span = unsafe Span(_unsafeStart: UnsafePointer(pointer), count: count)
+            let span = unsafe Span(_unsafeStart: pointer, count: count)
             return unsafe _overrideLifetime(span, borrowing: self)
         }
     }
@@ -130,7 +132,7 @@ extension String {
     @unsafe
     @inlinable
     public consuming func take() -> (pointer: UnsafeMutablePointer<String.Char>, count: Int) {
-        let result = unsafe (pointer, count)
+        let result = unsafe (UnsafeMutablePointer(mutating: pointer), count)
         discard self
         return unsafe result
     }

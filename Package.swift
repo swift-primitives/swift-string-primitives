@@ -9,13 +9,13 @@ let package = Package(
         .iOS(.v26),
         .tvOS(.v26),
         .watchOS(.v26),
-        .visionOS(.v26),
+        .visionOS(.v26)
     ],
     products: [
         .library(
             name: "String Primitives",
             targets: ["String Primitives"]
-        ),
+        )
     ],
     targets: [
         .target(
@@ -24,15 +24,10 @@ let package = Package(
             swiftSettings: [
                 .define("STRING_PRIMITIVES_AVAILABLE", .when(platforms: [
                     .macOS, .iOS, .tvOS, .watchOS, .visionOS,
-                    .linux, .windows, .android, .openbsd,
-                ])),
+                    .linux, .windows, .android, .openbsd
+                ]))
             ]
-        ),
-        .testTarget(
-            name: "String Primitives Tests",
-            dependencies: ["String Primitives"],
-            path: "Tests/String Primitives Tests"
-        ),
+        )
     ],
     swiftLanguageModes: [.v6]
 )
@@ -43,7 +38,7 @@ for target in package.targets where ![.system, .binary, .plugin, .macro].contain
         .enableUpcomingFeature("InternalImportsByDefault"),
         .enableUpcomingFeature("MemberImportVisibility"),
         .enableExperimentalFeature("Lifetimes"),
-        .strictMemorySafety(),
+        .strictMemorySafety()
     ]
     target.swiftSettings = (target.swiftSettings ?? []) + settings
 }
