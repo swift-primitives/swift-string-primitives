@@ -17,10 +17,15 @@ let package = Package(
             targets: ["String Primitives"]
         )
     ],
+    dependencies: [
+        .package(path: "../swift-ascii-primitives"),
+    ],
     targets: [
         .target(
             name: "String Primitives",
-            dependencies: [],
+            dependencies: [
+                .product(name: "ASCII Primitives", package: "swift-ascii-primitives"),
+            ],
             swiftSettings: [
                 .define("STRING_PRIMITIVES_AVAILABLE", .when(platforms: [
                     .macOS, .iOS, .tvOS, .watchOS, .visionOS,

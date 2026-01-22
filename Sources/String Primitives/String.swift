@@ -85,6 +85,32 @@ extension String {
         self.count = length
     }
 
+    /// Creates an owned string from an ASCII literal.
+    ///
+    /// Allocates new storage and copies the ASCII bytes, widening to UTF-16 on Windows.
+    ///
+    /// - Parameter literal: A compile-time string containing only ASCII characters (0x00-0x7F).
+    ///
+    /// - Precondition: All bytes in `literal` must be valid ASCII (≤ 0x7F).
+    @inlinable
+    public init(ascii literal: StaticString) {
+        let length = literal.utf8CodeUnitCount
+        let buffer = UnsafeMutablePointer<String.Char>.allocate(capacity: length + 1)
+        let source = unsafe literal.utf8Start
+        #if os(Windows)
+        // Widen each ASCII byte to UTF-16 code unit
+        for i in 0..<length {
+            (unsafe buffer)[i] = String.Char((unsafe source)[i])
+        }
+        #else
+        // Direct copy on POSIX (UTF-8)
+        unsafe buffer.initialize(from: source, count: length)
+        #endif
+        (unsafe buffer)[length] = String.terminator
+        unsafe (self.pointer = UnsafePointer(buffer))
+        self.count = length
+    }
+
 }
 
 // MARK: - Access
