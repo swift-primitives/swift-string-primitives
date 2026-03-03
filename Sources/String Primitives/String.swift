@@ -2,7 +2,7 @@
 //
 // This source file is part of the swift-string-primitives open source project
 //
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-string-primitives project authors
+// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-string-primitives project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE for license information
@@ -11,6 +11,8 @@
 
 #if STRING_PRIMITIVES_AVAILABLE && (os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) || os(Android) || os(OpenBSD) || os(Windows))
 
+public import Memory_Primitives_Core
+
 /// Owned, null-terminated platform string.
 ///
 /// Owns its storage and deallocates on deinit.
@@ -18,7 +20,7 @@
 ///
 /// `~Copyable` enforces unique ownership — preventing double-free bugs.
 ///
-/// Invariant: `pointer` points to `count + 1` allocated code units,
+/// Invariant: the underlying allocation contains `count + 1` code units,
 /// where the final code unit is the null terminator.
 ///
 /// ## Platform Encoding
@@ -35,19 +37,18 @@
 ///   managed by the owning value or its box
 @safe
 public struct String: ~Copyable, @unchecked Sendable {
-    /// The underlying pointer to the null-terminated sequence.
+    /// The underlying contiguous memory region.
     ///
-    /// Stored as immutable pointer to enforce post-initialization immutability.
+    /// `Memory.Contiguous<Char>` owns the allocation and deallocates on destruction.
+    /// The tracked `count` is the string length (excluding null terminator).
+    /// The null terminator sits at `pointer[count]` — in the allocation but
+    /// outside the tracked region.
     @usableFromInline
-    internal let pointer: UnsafePointer<Char>
+    internal let _storage: Memory.Contiguous<Char>
 
     /// The length in code units, excluding the null terminator.
-    public let count: Int
-
     @inlinable
-    deinit {
-        unsafe UnsafeMutablePointer(mutating: pointer).deallocate()
-    }
+    public var count: Int { _storage.count }
 }
 
 // MARK: - Initialization
@@ -68,8 +69,7 @@ extension String {
         #if DEBUG
         precondition(unsafe pointer[count] == String.terminator, "String: adopted buffer must be null-terminated")
         #endif
-        unsafe (self.pointer = UnsafePointer(pointer))
-        self.count = count
+        unsafe self._storage = Memory.Contiguous(adopting: pointer, count: count)
     }
 
     /// Creates an owned string by copying from a view.
@@ -77,12 +77,11 @@ extension String {
     /// Allocates new storage and copies the content.
     @inlinable
     public init(copying view: borrowing String.View) {
-        let length = view.length
+        let length = view.count
         let buffer = UnsafeMutablePointer<String.Char>.allocate(capacity: length + 1)
         unsafe buffer.initialize(from: view.pointer, count: length)
         (unsafe buffer)[length] = String.terminator
-        unsafe (self.pointer = UnsafePointer(buffer))
-        self.count = length
+        unsafe self._storage = Memory.Contiguous(adopting: buffer, count: length)
     }
 
     /// Creates an owned string from an ASCII literal.
@@ -107,8 +106,7 @@ extension String {
         unsafe buffer.initialize(from: source, count: length)
         #endif
         (unsafe buffer)[length] = String.terminator
-        unsafe (self.pointer = UnsafePointer(buffer))
-        self.count = length
+        unsafe self._storage = Memory.Contiguous(adopting: buffer, count: length)
     }
 
 }
@@ -122,7 +120,7 @@ extension String {
     public borrowing func withUnsafePointer<R: ~Copyable, E: Error>(
         _ body: (UnsafePointer<String.Char>) throws(E) -> R
     ) throws(E) -> R {
-        try unsafe body(pointer)
+        try unsafe body(_storage.unsafeBaseAddress)
     }
 
     /// Returns a view of this string.
@@ -131,7 +129,7 @@ extension String {
     @inlinable
     public var view: String.View {
         @_lifetime(borrow self) borrowing get {
-            let view = unsafe String.View(pointer)
+            let view = unsafe String.View(_storage.unsafeBaseAddress, count: _storage.count)
             return unsafe _overrideLifetime(view, borrowing: self)
         }
     }
@@ -140,8 +138,8 @@ extension String {
     @inlinable
     public var span: Span<String.Char> {
         @_lifetime(borrow self) borrowing get {
-            let span = unsafe Span(_unsafeStart: pointer, count: count)
-            return unsafe _overrideLifetime(span, borrowing: self)
+            let s = _storage.span
+            return unsafe _overrideLifetime(s, borrowing: self)
         }
     }
 }
@@ -158,9 +156,18 @@ extension String {
     @unsafe
     @inlinable
     public consuming func take() -> (pointer: UnsafeMutablePointer<String.Char>, count: Int) {
-        let result = unsafe (UnsafeMutablePointer(mutating: pointer), count)
-        discard self
-        return unsafe result
+        unsafe _storage.take()
+    }
+}
+
+// MARK: - Memory.Contiguous.Protocol
+
+extension String: Memory.Contiguous.`Protocol` {
+    @inlinable
+    public func withUnsafeBufferPointer<R, E: Swift.Error>(
+        _ body: (UnsafeBufferPointer<Char>) throws(E) -> R
+    ) throws(E) -> R {
+        try unsafe _storage.withUnsafeBufferPointer(body)
     }
 }
 

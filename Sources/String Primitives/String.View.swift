@@ -11,6 +11,14 @@
 
 #if STRING_PRIMITIVES_AVAILABLE && (os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) || os(Android) || os(OpenBSD) || os(Windows))
 
+public import Identity_Primitives
+
+// MARK: - Viewable Conformance
+
+extension String: Viewable {}
+
+// MARK: - View
+
 extension String {
     /// Non-escapable view of a null-terminated platform string.
     ///
@@ -25,24 +33,24 @@ extension String {
     public struct View: ~Copyable, ~Escapable {
         /// The underlying pointer to the null-terminated sequence.
         public let pointer: UnsafePointer<Char>
-    }
-}
 
-// MARK: - Initialization
+        /// The length in code units, excluding the null terminator.
+        public let count: Int
 
-extension String.View {
-    /// Creates a view from a pointer.
-    ///
-    /// The lifetime of this `View` value is tied to the lifetime of `pointer`.
-    ///
-    /// - Precondition: `pointer` must point to a null-terminated sequence.
-    @inlinable
-    @_lifetime(borrow pointer)
-    public init(_ pointer: UnsafePointer<String.Char>) {
-        #if DEBUG
-        unsafe Self.debugValidateTermination(pointer)
-        #endif
-        unsafe (self.pointer = pointer)
+        /// Creates a view from a pointer and count.
+        ///
+        /// The lifetime of this `View` value is tied to the lifetime of `pointer`.
+        ///
+        /// - Precondition: `pointer` must point to a null-terminated sequence.
+        @inlinable
+        @_lifetime(borrow pointer)
+        public init(_ pointer: UnsafePointer<String.Char>, count: Int) {
+            #if DEBUG
+            unsafe Self.debugValidateTermination(pointer)
+            #endif
+            unsafe (self.pointer = pointer)
+            self.count = count
+        }
     }
 }
 
@@ -85,15 +93,13 @@ extension String.View {
 
     /// The length in code units, excluding the null terminator.
     @inlinable
-    public var length: Int {
-        unsafe String.length(of: pointer)
-    }
+    public var length: Int { count }
 
     /// Returns a `Span` view of the string content, excluding the null terminator.
     @inlinable
     public var span: Span<String.Char> {
         @_lifetime(copy self) borrowing get {
-            let span = unsafe Span(_unsafeStart: pointer, count: length)
+            let span = unsafe Span(_unsafeStart: pointer, count: count)
             return unsafe _overrideLifetime(span, copying: self)
         }
     }

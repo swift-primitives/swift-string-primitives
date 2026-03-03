@@ -19,12 +19,16 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../swift-ascii-primitives"),
+        .package(path: "../swift-memory-primitives"),
+        .package(path: "../swift-identity-primitives"),
     ],
     targets: [
         .target(
             name: "String Primitives",
             dependencies: [
                 .product(name: "ASCII Primitives", package: "swift-ascii-primitives"),
+                .product(name: "Memory Primitives", package: "swift-memory-primitives"),
+                .product(name: "Identity Primitives", package: "swift-identity-primitives"),
             ],
             swiftSettings: [
                 .define("STRING_PRIMITIVES_AVAILABLE", .when(platforms: [
