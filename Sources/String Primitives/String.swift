@@ -84,6 +84,18 @@ extension String {
         unsafe self._storage = Memory.Contiguous(adopting: buffer, count: length)
     }
 
+    /// Creates an owned string by copying from a span of platform code units.
+    ///
+    /// Allocates new storage, copies the content, and null-terminates.
+    @inlinable
+    public init(_ span: Span<Char>) {
+        let length = span.count
+        let buffer = UnsafeMutablePointer<Char>.allocate(capacity: length + 1)
+        for i in 0..<length { (unsafe buffer)[i] = span[i] }
+        (unsafe buffer)[length] = String.terminator
+        unsafe self._storage = Memory.Contiguous(adopting: buffer, count: length)
+    }
+
     /// Creates an owned string from an ASCII literal.
     ///
     /// Allocates new storage and copies the ASCII bytes, widening to UTF-16 on Windows.
