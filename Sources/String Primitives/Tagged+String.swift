@@ -81,19 +81,6 @@ extension Tagged where RawValue == String, Tag: ~Copyable {
     }
 }
 
-// MARK: - Scoped Pointer Access
-
-extension Tagged where RawValue == String, Tag: ~Copyable {
-    /// Executes a closure with the underlying pointer.
-    @unsafe
-    @inlinable
-    public borrowing func withUnsafePointer<R: ~Copyable, E: Swift.Error>(
-        _ body: (UnsafePointer<String.Char>) throws(E) -> R
-    ) throws(E) -> R {
-        try unsafe rawValue.withUnsafePointer(body)
-    }
-}
-
 // MARK: - Ownership Transfer
 
 extension Tagged where RawValue == String, Tag: ~Copyable {
