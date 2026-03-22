@@ -44,7 +44,7 @@ extension Tagged where RawValue == String, Tag: ~Copyable {
     /// Takes ownership of `pointer`. The caller must not deallocate it.
     @inlinable
     public init(adopting pointer: UnsafeMutablePointer<String.Char>, count: Int) {
-        self.init(__unchecked: (), String(adopting: pointer, count: count))
+        unsafe self.init(__unchecked: (), String(adopting: pointer, count: count))
     }
 
     /// Creates a tagged string by copying from a view.
