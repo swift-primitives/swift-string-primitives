@@ -97,7 +97,7 @@ extension Tagged where RawValue == String, Tag: ~Copyable {
 
 // MARK: - Memory.Contiguous.Protocol
 
-extension Tagged: Memory.Contiguous.`Protocol`
+extension Tagged: @retroactive Memory.Contiguous.`Protocol`
 where RawValue == String, Tag: ~Copyable {
     @inlinable
     public func withUnsafeBufferPointer<R, E: Swift.Error>(
