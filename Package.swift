@@ -27,7 +27,7 @@ let package = Package(
             name: "String Primitives",
             dependencies: [
                 .product(name: "ASCII Primitives", package: "swift-ascii-primitives"),
-                .product(name: "Memory Primitives", package: "swift-memory-primitives"),
+                .product(name: "Memory Primitives Core", package: "swift-memory-primitives"),
                 .product(name: "Identity Primitives", package: "swift-identity-primitives"),
             ],
             swiftSettings: [
