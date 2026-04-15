@@ -30,13 +30,21 @@ public import Memory_Primitives_Core
 ///
 /// ## Sendability
 ///
-/// This type is `@unchecked Sendable` because:
-/// - The buffer is uniquely owned by this value (`~Copyable` prevents aliasing)
-/// - The buffer is **immutable after initialization** (stored as `UnsafePointer`)
-/// - Sharing across tasks (via `Reference.Box`) is safe: reads-only + lifetime
-///   managed by the owning value or its box
+/// ## Safety Invariant
+///
+/// `String` is `~Copyable` and owns an immutable `Memory.Contiguous` buffer.
+/// The buffer is uniquely owned and immutable after initialization.
+/// Cross-thread transfer via move relinquishes the sender's access.
+///
+/// ## Intended Use
+///
+/// - Moving a string across isolation boundaries.
+///
+/// ## Non-Goals
+///
+/// - Not shareable; single-owner semantics.
 @safe
-public struct String: ~Copyable, @unchecked Sendable {
+public struct String: ~Copyable, @unsafe @unchecked Sendable {
     /// The underlying contiguous memory region.
     ///
     /// `Memory.Contiguous<Char>` owns the allocation and deallocates on destruction.
