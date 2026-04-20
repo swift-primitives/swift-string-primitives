@@ -108,23 +108,23 @@ extension String {
     ///
     /// Allocates new storage and copies the ASCII bytes, widening to UTF-16 on Windows.
     ///
-    /// - Parameter literal: A compile-time string containing only ASCII characters (0x00-0x7F).
+    /// - Parameter literal: A compile-time string containing only ASCII characters (≤ 0x7F).
     ///
-    /// - Precondition: All bytes in `literal` must be valid ASCII (≤ 0x7F).
+    /// - Precondition: All bytes in `literal` MUST be ASCII (< 0x80). Non-ASCII
+    ///   bytes would silently widen to invalid UTF-16 code units on Windows; the
+    ///   precondition prevents that latent corruption at the cost of one byte
+    ///   comparison per code unit.
     @inlinable
     public init(ascii literal: StaticString) {
         let length = literal.utf8CodeUnitCount
         let buffer = UnsafeMutablePointer<String.Char>.allocate(capacity: length + 1)
-        let source = unsafe literal.utf8Start
-        #if os(Windows)
-        // Widen each ASCII byte to UTF-16 code unit
-        for i in 0..<length {
-            (unsafe buffer)[i] = String.Char((unsafe source)[i])
+        literal.withUTF8Buffer { utf8 in
+            for i in 0..<length {
+                let byte = unsafe utf8[i]
+                precondition(byte < 0x80, "String.init(ascii:): literal contains non-ASCII byte 0x\(Swift.String(byte, radix: 16, uppercase: true)) at index \(i)")
+                (unsafe buffer)[i] = String.Char(byte)
+            }
         }
-        #else
-        // Direct copy on POSIX (UTF-8)
-        unsafe buffer.initialize(from: source, count: length)
-        #endif
         (unsafe buffer)[length] = String.terminator
         unsafe self._storage = Memory.Contiguous(adopting: buffer, count: length)
     }
