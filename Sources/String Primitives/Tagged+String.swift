@@ -47,9 +47,9 @@ extension Tagged where RawValue == String, Tag: ~Copyable {
         unsafe self.init(__unchecked: (), String(adopting: pointer, count: count))
     }
 
-    /// Creates a tagged string by copying from a view.
+    /// Creates a tagged string by copying from a borrowed view.
     @inlinable
-    public init(copying view: borrowing String.View) {
+    public init(copying view: borrowing String.Borrowed) {
         self.init(__unchecked: (), String(copying: view))
     }
 

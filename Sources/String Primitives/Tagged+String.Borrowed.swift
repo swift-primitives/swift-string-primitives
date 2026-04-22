@@ -13,18 +13,18 @@
 
 public import Identity_Primitives
 
-// MARK: - View Access
+// MARK: - Borrowed View Access
 
 extension Tagged where RawValue == String, Tag: ~Copyable {
-    /// Returns a view of this tagged string.
+    /// Returns a borrowed view of this tagged string.
     ///
-    /// The lifetime of the returned `View` is tied to `self`.
+    /// The lifetime of the returned `Borrowed` is tied to `self`.
     ///
     /// Two-level `@_lifetime` chain:
     /// 1. `rawValue.view` borrows from `rawValue` (stored property)
-    /// 2. `_overrideLifetime` re-parents the View's lifetime to `self`
+    /// 2. `_overrideLifetime` re-parents the Borrowed's lifetime to `self`
     @inlinable
-    public var view: String.View {
+    public var view: String.Borrowed {
         @_lifetime(borrow self) borrowing get {
             let v = rawValue.view
             return unsafe _overrideLifetime(v, borrowing: self)

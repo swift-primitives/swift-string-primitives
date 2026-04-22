@@ -80,11 +80,11 @@ extension String {
         unsafe self._storage = Memory.Contiguous(adopting: pointer, count: count)
     }
 
-    /// Creates an owned string by copying from a view.
+    /// Creates an owned string by copying from a borrowed view.
     ///
     /// Allocates new storage and copies the content.
     @inlinable
-    public init(copying view: borrowing String.View) {
+    public init(copying view: borrowing String.Borrowed) {
         let length = view.count
         let buffer = UnsafeMutablePointer<String.Char>.allocate(capacity: length + 1)
         unsafe buffer.initialize(from: view.pointer, count: length)
@@ -143,13 +143,13 @@ extension String {
         try unsafe body(_storage.unsafeBaseAddress)
     }
 
-    /// Returns a view of this string.
+    /// Returns a borrowed view of this string.
     ///
-    /// The lifetime of the returned `View` is tied to `self`.
+    /// The lifetime of the returned `Borrowed` is tied to `self`.
     @inlinable
-    public var view: String.View {
+    public var view: String.Borrowed {
         @_lifetime(borrow self) borrowing get {
-            let view = unsafe String.View(_storage.unsafeBaseAddress, count: _storage.count)
+            let view = unsafe String.Borrowed(_storage.unsafeBaseAddress, count: _storage.count)
             return unsafe _overrideLifetime(view, borrowing: self)
         }
     }

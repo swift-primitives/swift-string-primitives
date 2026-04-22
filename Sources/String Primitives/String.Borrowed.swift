@@ -11,16 +11,16 @@
 
 #if STRING_PRIMITIVES_AVAILABLE && (os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) || os(Android) || os(OpenBSD) || os(Windows))
 
-public import Identity_Primitives
+public import Ownership_Primitives
 
-// MARK: - Viewable Conformance
+// MARK: - Ownership.Borrow.`Protocol` Conformance
 
-extension String: Viewable {}
+extension String: Ownership.Borrow.`Protocol` {}
 
-// MARK: - View
+// MARK: - Borrowed
 
 extension String {
-    /// Non-escapable view of a null-terminated platform string.
+    /// Non-escapable borrowed view of a null-terminated platform string.
     ///
     /// Does not own storage. Valid only for the duration of the borrowing scope.
     /// The referenced memory must remain valid and unmodified while borrowed.
@@ -30,16 +30,16 @@ extension String {
     ///
     /// Invariant: Points to a null-terminated sequence.
     @safe
-    public struct View: ~Copyable, ~Escapable {
+    public struct Borrowed: ~Copyable, ~Escapable {
         /// The underlying pointer to the null-terminated sequence.
         public let pointer: UnsafePointer<Char>
 
         /// The length in code units, excluding the null terminator.
         public let count: Int
 
-        /// Creates a view from a pointer and count.
+        /// Creates a borrowed view from a pointer and count.
         ///
-        /// The lifetime of this `View` value is tied to the lifetime of `pointer`.
+        /// The lifetime of this `Borrowed` value is tied to the lifetime of `pointer`.
         ///
         /// - Precondition: `pointer` must point to a null-terminated sequence.
         @inlinable
@@ -57,7 +57,7 @@ extension String {
 // MARK: - Debug Validation
 
 #if DEBUG
-extension String.View {
+extension String.Borrowed {
     /// Maximum bytes to scan when validating termination in debug builds.
     @usableFromInline
     internal static let maxDebugScanLength = 16 * 1024 * 1024 // 16 MiB
@@ -74,14 +74,14 @@ extension String.View {
             unsafe (current = current.successor())
             scanned += 1
         }
-        assertionFailure("String.View: pointer does not appear to be null-terminated within \(maxDebugScanLength) bytes")
+        assertionFailure("String.Borrowed: pointer does not appear to be null-terminated within \(maxDebugScanLength) bytes")
     }
 }
 #endif
 
 // MARK: - Access
 
-extension String.View {
+extension String.Borrowed {
     /// Executes a closure with the underlying pointer.
     @unsafe
     @inlinable
