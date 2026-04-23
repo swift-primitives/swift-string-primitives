@@ -20,7 +20,7 @@ let package = Package(
     dependencies: [
         .package(path: "../swift-ascii-primitives"),
         .package(path: "../swift-memory-primitives"),
-        .package(path: "../swift-identity-primitives"),
+        .package(path: "../swift-tagged-primitives"),
         .package(path: "../swift-ownership-primitives"),
     ],
     targets: [
@@ -29,7 +29,7 @@ let package = Package(
             dependencies: [
                 .product(name: "ASCII Primitives", package: "swift-ascii-primitives"),
                 .product(name: "Memory Primitives Core", package: "swift-memory-primitives"),
-                .product(name: "Identity Primitives", package: "swift-identity-primitives"),
+                .product(name: "Tagged Primitives", package: "swift-tagged-primitives"),
                 .product(name: "Ownership Primitives", package: "swift-ownership-primitives"),
             ],
             swiftSettings: [

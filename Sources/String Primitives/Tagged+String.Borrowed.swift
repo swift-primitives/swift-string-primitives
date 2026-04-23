@@ -11,7 +11,7 @@
 
 #if STRING_PRIMITIVES_AVAILABLE && (os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) || os(Android) || os(OpenBSD) || os(Windows))
 
-public import Identity_Primitives
+public import Tagged_Primitives
 
 // MARK: - Borrowed View Access
 
