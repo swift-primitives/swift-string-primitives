@@ -1,6 +1,6 @@
 # .github/metadata.yaml
 # Triaged by AI-assisted bulk pass (2026-04-29).
-description: "String types for Swift."
+description: "Null-terminated, single-owner platform-native string storage with non-escapable borrowed views and zero Foundation dependency for Swift."
 topics:
   - primitives
   - string
